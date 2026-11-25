@@ -10,7 +10,7 @@ Lightweight, zero-dependency Node.js Stdio MCP plugin for **Antigravity** that w
   - Supports pointing `pythonExe` at a signed CPython binary + isolated `sitePackages` directory (avoiding Windows `_ctypes` DLL load blocks on unsigned `uv` venv trampoline stubs).
 - **Zero interactive hangs**: Child `stdin` is always closed; expired OAuth2 tokens immediately return structured `auth_required` diagnostics with the consent URL instead of hanging.
 - **Async background jobs**: `colab_job` runs multi-minute GPU workloads (e.g. Blender Cycles batch renders, model downloads, training runs) asynchronously with live log tailing.
-- **Bundled `colab-operator` Skill**: Teaches agents best practices including explicit session naming, zombie-VM billing protection, and Blender Cycles headless rendering SOPs.
+- **Bundled `colab-operator` Skill & `rules/AGENTS.md`**: Teaches agents best practices and enforces MCP-first routing, zombie-VM billing protection, and Blender Cycles headless rendering SOPs.
 
 ## MCP Tools
 
