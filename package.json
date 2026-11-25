@@ -1,0 +1,21 @@
+{
+  "name": "colab-bridge-antigravity",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Zero-dependency local Stdio MCP plugin for Antigravity wrapping google-colab-cli.",
+  "license": "MIT",
+  "homepage": "https://github.com/azwosile/colab-bridge-antigravity#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/azwosile/colab-bridge-antigravity.git"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "test": "node --test tests/mcp-server.test.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "doctor:offline": "node scripts/doctor.mjs --offline"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "colab-bridge",
+  "displayName": "Google Colab Bridge",
+  "version": "0.1.0",
+  "description": "Connect Antigravity to Google Colab GPUs/TPUs via a local Stdio MCP server wrapping google-colab-cli for zero-prompt session provisioning, Python/shell execution, file sync, and async long-running jobs.",
+  "logo": "assets/logo.svg",
+  "author": {
+    "name": "azwosile",
+    "url": "https://github.com/azwosile"
+  },
+  "homepage": "https://github.com/azwosile/colab-bridge-antigravity",
+  "repository": "https://github.com/azwosile/colab-bridge-antigravity",
+  "suggestedPrompts": [
+    "Check Google Colab bridge health, active sessions, and compute-unit balance",
+    "Provision a Colab T4 GPU session, verify nvidia-smi, and stop it cleanly when done",
+    "Upload a packed Blender scene to Colab and render a Cycles GPU frame asynchronously"
+  ]
+}

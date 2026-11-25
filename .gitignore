@@ -1,0 +1,11 @@
+# Local machine overrides (paths, isolated venvs, custom HOME)
+local.config.json
+
+# Runtime logs, caches, OS clutter
+*.log
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+node_modules/
+tmp/

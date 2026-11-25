@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "colab-bridge": {
+      "command": "node",
+      "args": [
+        "${PLUGIN_ROOT}/bin/mcp-server.mjs"
+      ],
+      "env": {
+        "COLAB_BRIDGE_SHIM_DIR": "${PLUGIN_ROOT}/bin",
+        "COLAB_BRIDGE_AUTH": "oauth2",
+        "COLAB_BRIDGE_DATA_DIR": "${PLUGIN_DATA}"
+      }
+    }
+  }
+}
