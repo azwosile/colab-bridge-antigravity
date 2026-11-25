@@ -1,5 +1,7 @@
 # colab-bridge-antigravity
 
+English | [简体中文](README.zh-CN.md)
+
 Lightweight, zero-dependency Node.js Stdio MCP plugin for **Antigravity** that wraps [`google-colab-cli`](https://github.com/googlecolab/google-colab-cli) into 6 structured MCP tools — built to work smoothly on native **Windows**, macOS, and Linux without WSL.
 
 ## Highlights
@@ -22,6 +24,22 @@ Lightweight, zero-dependency Node.js Stdio MCP plugin for **Antigravity** that w
 | `colab_files` | `upload`, `download` (auto-creates local parent directories), `ls`, `rm` |
 | `colab_install` | Install Python packages (`packages[]` or local `requirement` file) onto a session VM |
 | `colab_job` | Async `submit` (`kind="exec"` or `"run"`), `status` (with `log_tail`), `list`, `cancel` |
+
+## Plugin Structure
+
+```text
+colab-bridge-antigravity/
+├── plugin.json                  # Antigravity plugin manifest (name, displayName, version, logo, suggestedPrompts)
+├── agy-market.json              # AGY Market companion metadata (categories, tags, preservePaths for local.config.json)
+├── mcp_config.json              # Local Stdio MCP server definition (${PLUGIN_ROOT}/bin/mcp-server.mjs)
+├── rules/AGENTS.md              # Global routing, billing-safety, and headless execution rules
+├── skills/colab-operator/       # Bundled colab-operator skill (SKILL.md)
+├── bin/                         # MCP server, Colab CLI runner, and Windows filelock shim
+├── scripts/                     # Plugin sync script (register-plugin.ps1) and live doctor script
+├── assets/logo.svg              # Plugin icon referenced by plugin.json
+├── local.config.example.json    # Template for gitignored machine-local overrides (local.config.json)
+└── tests/mcp-server.test.mjs    # Node built-in test suite
+```
 
 ## Prerequisites
 
@@ -62,12 +80,15 @@ Configuration precedence (highest → lowest):
 
 ### 2. Install into Antigravity global plugins
 
+**Via AGY Market (recommended):**
+Install `colab-bridge` from AGY Market or add this repository URL directly. `plugin.json` supplies the Antigravity manifest, and `agy-market.json` declares `"preservePaths": ["local.config.json"]` so marketplace upgrades keep your existing `local.config.json` intact.
+
 **Windows (PowerShell):**
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\register-plugin.ps1 -Mode GlobalCopy -Force
 ```
 
-*(Note: Antigravity's plugin scanner skips Windows directory junctions under `~/.gemini/config/plugins/`, so `GlobalCopy` is the default and overwrites files in-place safely.)*
+*(Note: Antigravity's plugin scanner skips Windows directory junctions under `~/.gemini/config/plugins/`, so `GlobalCopy` is the default, updates files in-place safely, and preserves any existing `local.config.json` in the target directory.)*
 
 **macOS / Linux:**
 ```bash

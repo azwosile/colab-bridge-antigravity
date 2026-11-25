@@ -3,9 +3,10 @@
   Register (or unregister) the colab-bridge Antigravity plugin at global or workspace scope.
 .DESCRIPTION
   Supports three clean, non-destructive modes:
-    - GlobalLink (default): creates a directory junction at ~\.gemini\config\plugins\colab-bridge
+    - GlobalCopy (default): copies the plugin bundle into ~\.gemini\config\plugins\colab-bridge
+      while preserving any existing local.config.json (and preservePaths declared in agy-market.json).
+    - GlobalLink: creates a directory junction at ~\.gemini\config\plugins\colab-bridge
       pointing to this plugin root (no admin rights required, stays live-synced across all workspaces).
-    - GlobalCopy: copies the plugin bundle into ~\.gemini\config\plugins\colab-bridge.
     - WorkspaceJson: merges an entry into <WorkspaceRoot>\.agents\plugins.json.
   Never edits ~\.gemini\config\config.json.
 #>
@@ -140,12 +141,37 @@ if ($Mode -eq 'GlobalLink') {
   New-Item -ItemType Junction -Path $targetDir -Target $PluginRoot | Out-Null
   Write-Ok "Created junction: $targetDir ==> $PluginRoot"
 } else {
+  function Get-PreserveRelPaths([string]$RootDir) {
+    $set = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+    [void]$set.Add('local.config.json')
+    $marketManifest = Join-Path $RootDir 'agy-market.json'
+    if (Test-Path -LiteralPath $marketManifest) {
+      try {
+        $parsed = Get-Content -LiteralPath $marketManifest -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ($null -ne $parsed -and ($parsed.PSObject.Properties.Name -contains 'preservePaths') -and $null -ne $parsed.preservePaths) {
+          foreach ($raw in @($parsed.preservePaths)) {
+            $rel = (([string]$raw).Trim().Replace('\', '/') -replace '^(\./)+', '') -replace '/+$', ''
+            if (-not [string]::IsNullOrWhiteSpace($rel) -and (-not $rel.Contains('..')) -and (-not $rel.StartsWith('/'))) {
+              [void]$set.Add($rel)
+            }
+          }
+        }
+      } catch {
+        Write-Info "Could not parse agy-market.json preservePaths; defaulting to local.config.json"
+      }
+    }
+    return ,$set
+  }
+
+  $preservePaths = Get-PreserveRelPaths $PluginRoot
+  $excludedDirs = @('.git', 'node_modules', '__pycache__', 'tmp')
+
   if ((Test-Path -LiteralPath $targetDir) -and (-not $Force)) {
     Write-Err "Already exists: $targetDir (pass -Force to sync in-place, or -Unregister)."
     exit 3
   }
   if ($DryRun) {
-    Write-Ok "Dry-run ($Mode): sync $PluginRoot ==> $targetDir"
+    Write-Ok "Dry-run ($Mode): sync $PluginRoot ==> $targetDir (preserving existing: $($preservePaths -join ', '))"
     exit 0
   }
   if (-not (Test-Path -LiteralPath $globalPluginsDir)) {
@@ -160,11 +186,33 @@ if ($Mode -eq 'GlobalLink') {
   if (-not (Test-Path -LiteralPath $targetDir)) {
     New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
   }
-  # Overwrite files in-place so live file-watchers on the plugin root do not fail sync.
-  Get-ChildItem -LiteralPath $PluginRoot -Force | ForEach-Object {
-    if ($_.Name -in @('.git', 'node_modules')) { return }
-    Copy-Item -LiteralPath $_.FullName -Destination $targetDir -Recurse -Force
+
+  function Sync-DirectoryInPlace([string]$SourceDir, [string]$RelPrefix) {
+    foreach ($entry in @(Get-ChildItem -LiteralPath $SourceDir -Force)) {
+      if ($entry.PSIsContainer) {
+        if ($entry.Name -in $excludedDirs) { continue }
+        $nextRel = if ([string]::IsNullOrEmpty($RelPrefix)) { $entry.Name } else { "$RelPrefix/$($entry.Name)" }
+        Sync-DirectoryInPlace -SourceDir $entry.FullName -RelPrefix $nextRel
+      } else {
+        if ($entry.Name.EndsWith('.pyc', [System.StringComparison]::OrdinalIgnoreCase)) { continue }
+        $relPosix = if ([string]::IsNullOrEmpty($RelPrefix)) { $entry.Name } else { "$RelPrefix/$($entry.Name)" }
+        $destFile = Join-Path $targetDir ($relPosix -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+        if ($preservePaths.Contains($relPosix) -and (Test-Path -LiteralPath $destFile)) {
+          Write-Info "Preserved existing $relPosix at $destFile"
+          continue
+        }
+        $destParent = Split-Path -Parent $destFile
+        if (-not (Test-Path -LiteralPath $destParent)) {
+          New-Item -ItemType Directory -Path $destParent -Force | Out-Null
+        }
+        Copy-Item -LiteralPath $entry.FullName -Destination $destFile -Force
+      }
+    }
   }
+
+  # Overwrite files in-place so live file-watchers on the plugin root do not fail sync,
+  # while preserving existing machine-local config files (e.g. local.config.json).
+  Sync-DirectoryInPlace -SourceDir $PluginRoot -RelPrefix ''
   Write-Ok "Synced plugin bundle in-place to $targetDir"
 }
 exit 0

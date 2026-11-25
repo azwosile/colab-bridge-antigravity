@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "categories": [
+    "mcp-integrations"
+  ],
+  "tags": [
+    "connector",
+    "google-colab",
+    "mcp",
+    "gpu"
+  ],
+  "preservePaths": [
+    "local.config.json"
+  ]
+}
